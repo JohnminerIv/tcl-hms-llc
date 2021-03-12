@@ -18,7 +18,6 @@ const user = {
   username: 'test1',
   password: 'Unl1m1t3dBr41nUlt1m4t3P455w0rd!',
   email: 'john.fakey.email@gmail.com',
-  publicEthAddress: '0xa257767e48462AF52C67F1CE0BdD72001da35190',
 };
 
 describe('User routes', function () {

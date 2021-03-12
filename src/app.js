@@ -1,21 +1,39 @@
+// Require Libraries
+require('dotenv').config();
 const express = require('express');
+require('./data/patre-eth-db');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
 
+// Middleware
+const bodyParser = require('body-parser');
+require('express-validator');
+
+// app setup
 const app = express();
-
 // Serve the static files from the React app
-app.use(express.static(path.join(__dirname, '/public')));
+app.use('/', express.static(path.join(__dirname, '/public')));
 
-// An api endpoint that returns a short list of items
-app.get('/api/getList', (req, res) => {
-  const list = ['item1', 'item2', 'item3'];
-  res.json(list);
-  console.log('Sent list of items');
-});
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
-// Handles any requests that don't match the ones above
-app.get('*', (req, res) => {
-  res.sendFile(path.join(`${__dirname}/public/index.html`));
-});
+app.use(cookieParser());
+
+const checkAuth = (req, _res, next) => {
+  // eslint-disable-next-line no-console
+  console.log('Checking authentication');
+  if (typeof req.cookies.nToken === 'undefined' || req.cookies.nToken === null) {
+    req.user = null;
+  } else {
+    const token = req.cookies.nToken;
+    const decodedToken = jwt.decode(token, { complete: true }) || {};
+    req.user = decodedToken.payload;
+    console.log(req.user);
+  }
+  next();
+};
+
+app.use(checkAuth);
 
 module.exports = app;

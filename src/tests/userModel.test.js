@@ -14,7 +14,6 @@ const user = {
   username: 'test1',
   password: 'test1',
   email: 'john.fakey.email@gmail.com',
-  publicEthAddress: '0xa257767e48462AF52C67F1CE0BdD72001da35190',
 };
 
 describe('User model', function () {
@@ -23,29 +22,20 @@ describe('User model', function () {
       const createdUser = new User(user);
       createdUser
         .save()
+        .then(function (savedUser) {
+          return Promise.all([savedUser, User.findById(savedUser._id)]);
+        })
+        .then(function (data) {
+          should.exist(data[0]);
+          should.exist(data[1]);
+          data[1].should.be.an('object');
+          return Promise.all([User.findByIdAndDelete(data[0]._id)]);
+        })
         .then(function () {
-          User
-            .findById(createdUser._id, function (err, doc) {
-              should.not.exist(err);
-              should.exist(doc);
-              doc.should.be.an('object');
-            })
-            .then(function () {
-              User
-                .deleteMany({ username: 'test1' }, function (err) {
-                  console.log(err);
-                  console.log('del user');
-                  done();
-                });
-            })
-            .catch(function (err) {
-              console.log(err);
-              done();
-            });
+          done();
         })
         .catch(function (err) {
           console.log(err);
-          done();
         });
     });
 });

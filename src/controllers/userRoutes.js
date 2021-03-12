@@ -11,46 +11,38 @@ module.exports = (app) => {
     body('email').isEmail(),
     // eslint-disable-next-line consistent-return
     (req, res) => {
-      if (!req.user === null) {
-        return res.status(401).send({ message: 'Not Authorised' });
+      if (req.user !== null) {
+        return res.status(401).send({ message: 'Already Logged in' });
       }
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         // eslint-disable-next-line no-console
         console.log(errors);
-        return res.status(400).render('bruh');
+        return res.status(400).send({ message: 'Invalid username or password.' });
       }
       User
         .findOne({ username: req.body.username })
         // eslint-disable-next-line consistent-return
         .then((foundUser) => {
-          if (foundUser === null) {
-            const user = User({
-              username: req.body.username,
-              password: req.body.password,
-              email: req.body.email,
-              publicEthAddress: req.body.publicEthAddress,
-            });
-            user
-              .save()
-              .then((savedUser) => {
-                // eslint-disable-next-line no-underscore-dangle
-                const token = jwt.sign({ _id: savedUser._id }, process.env.SECRET, { expiresIn: '60 days' });
-                res.cookie('nToken', token, { maxAge: 900000, httpOnly: true });
-                return res.redirect('/');
-              })
-              .catch((err) => {
-                // eslint-disable-next-line no-console
-                console.log(err);
-                return res.status(400).render('bruh');
-              });
-          } else {
-            return res.render('userCreate', { message: 'Username taken' });
+          if (foundUser !== null) {
+            return (res.status(400).send({ message: 'Username already taken.' }), null);
           }
+          const user = new User({
+            username: req.body.username,
+            password: req.body.password,
+            email: req.body.email,
+          });
+          return Promise.all([user.save()]);
+        })
+        .then((savedUser) => {
+          if (savedUser !== null) {
+            return res.redirect('/');
+          }
+          return null;
         })
         .catch((err) => {
-          // eslint-disable-next-line no-console
           console.log(err);
+          return res.status(500).send({ message: 'Something went wrong.' });
         });
     },
   );
@@ -67,7 +59,6 @@ module.exports = (app) => {
           username: req.body.username,
           password: req.body.password,
           email: req.body.email,
-          publicEthAddress: req.body.publicEthAddress,
         })
         .then(() => res.render('user'))
         // eslint-disable-next-line no-console
@@ -108,7 +99,7 @@ module.exports = (app) => {
             });
           });
       }
-      return res.status(404).render('bruh');
+      return res.status(404).send({ message: 'Something bad happened.' });
     },
   );
 };
