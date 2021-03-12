@@ -1,3 +1,6 @@
+# build of the frontend
+src/public
+
 # Logs
 logs
 *.log
